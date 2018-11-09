@@ -84,7 +84,7 @@ function startHeartbeat(context)
         {
             if (!(data && data.status === 200))
             {
-                disconnect(context)
+                exports.disconnect(context)
             }
         })
     }, HEARTBEAT_INTERVALE_MS)
@@ -135,7 +135,7 @@ function authenticate(context, callback)
         }
         else
         {
-            disconnect(context)
+            exports.disconnect(context)
             callback(context, null)
         }
     })
@@ -155,7 +155,7 @@ function request(context, json, callback)
     {
         if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED)
         {
-            disconnect(context)
+            exports.disconnect(context)
             exports.request(context, json, callback) // Redo the request, it will try to authenticate again
             return
         }
@@ -182,7 +182,7 @@ exports.init = (appId, serverName, serverSecret, url) =>
     {
         url = "sharedprod.braincloudservers.com"
     }
-    
+
     return {
         url: url,
         appId: appId,
