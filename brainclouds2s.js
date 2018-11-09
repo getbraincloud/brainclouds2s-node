@@ -39,7 +39,7 @@ function s2sRequest(context, json, callback)
         {
             if (context.logEnabled)
             {
-                console.log(`[S2S SEND ${context.appId}] ${data}`)
+                console.log(`[S2S RECV ${context.appId}] ${data}`)
             }
             if (callback)
             {
