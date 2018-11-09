@@ -151,7 +151,7 @@ function request(context, json, callback)
 
     context.packetId++
 
-    s2sRequest(packet, (context, data) =>
+    s2sRequest(packet, json, (context, data) =>
     {
         if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED)
         {
