@@ -178,6 +178,11 @@ function request(context, json, callback)
  */
 exports.init = (appId, serverName, serverSecret, url) =>
 {
+    if (!url)
+    {
+        url = "sharedprod.braincloudservers.com"
+    }
+    
     return {
         url: url,
         appId: appId,
