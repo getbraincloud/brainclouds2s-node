@@ -144,8 +144,8 @@ function authenticate(context, callback)
 function request(context, json, callback)
 {
     let packet = {
-        packetId: packetId,
-        sessionId: sessionId,
+        packetId: context.packetId,
+        sessionId: context.sessionId,
         messages: [json]
     }
 
