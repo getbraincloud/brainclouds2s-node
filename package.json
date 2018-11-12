@@ -1,6 +1,6 @@
 {
   "name": "brainclouds2s",
-  "version": "3.10.0",
+  "version": "3.9.0",
   "description": "brianCloud S2S module",
   "main": "brainclouds2s.js",
   "scripts": {
