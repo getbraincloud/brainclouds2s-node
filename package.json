@@ -1,0 +1,23 @@
+{
+  "name": "brainclouds2s",
+  "version": "3.10.0",
+  "description": "brianCloud S2S module",
+  "main": "brainclouds2s.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitHeads/brainclouds2s-node.git"
+  },
+  "keywords": [
+    "braincloud",
+    "s2s"
+  ],
+  "author": "David St-Louis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
+  },
+  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme"
+}
