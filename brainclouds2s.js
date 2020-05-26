@@ -20,7 +20,7 @@ function s2sRequest(context, json, callback)
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': postData.length
+            'Content-Length': (new TextEncoder().encode(postData)).length
         }
     }
 
@@ -157,6 +157,13 @@ function request(context, json, callback)
         {
             exports.disconnect(context)
             exports.request(context, json, callback) // Redo the request, it will try to authenticate again
+            return
+        }
+
+        // Error that has no packets
+        if (data && !data.messageResponses)
+        {
+            callback(context, data)
             return
         }
 
