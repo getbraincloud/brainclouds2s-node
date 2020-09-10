@@ -76,6 +76,7 @@ function startHeartbeat(context)
     stopHeartbeat(context)
     context.heartbeatInternalId = setInterval(() =>
     {
+        console.log("Heartbeat")
         request({
             service: "heartbeat",
             operation: "HEARTBEAT",
@@ -237,7 +238,7 @@ exports.request = (context, json, callback) =>
     }
     else
     {
-        authenticate(context, data =>
+        authenticate(context, (context, data) =>
         {
             if (data)
             {

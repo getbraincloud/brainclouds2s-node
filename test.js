@@ -221,7 +221,7 @@ async function run_tests()
                 }
             }, (s2s, result) =>
             {
-                equal(result.status, 200, JSON.stringify(result));
+                equal(result && result.status, 200, JSON.stringify(result));
                 ++doneCount;
                 if (doneCount == 3) resolve_test();
             })
@@ -250,6 +250,33 @@ async function run_tests()
             resolve_test();
         })
     })
+
+    // await asyncTest("heartbeat test", () =>
+    // {
+    //     setTimeout(() =>
+    //     {
+    //         S2S.request(s2s, {
+    //             service: "script",
+    //             operation: "RUN",
+    //             data: {
+    //                 scriptName: "testScript2", 
+    //                 scriptData: {
+    //                     profileIds: [
+    //                         "Some profile ID"
+    //                     ],
+    //                     alertContent: {
+    //                         body: "Player wysłał(a) ci zaproszenie do znajomych"
+    //                     },
+    //                     customData: {}
+    //                 }
+    //             }
+    //         }, (s2s, result) =>
+    //         {
+    //             equal(result.status, 200, JSON.stringify(result));
+    //             resolve_test();
+    //         })
+    //     }, 2 * 60 * 60 * 1000)
+    // })
 }
 
 async function main()
