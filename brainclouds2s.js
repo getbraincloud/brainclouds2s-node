@@ -1,4 +1,5 @@
 var https = require('https')
+var util = require('util')
 
 // Constants
 const SERVER_SESSION_EXPIRED = 40365          // Error code for expired session
@@ -20,7 +21,7 @@ function s2sRequest(context, json, callback)
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': (new TextEncoder().encode(postData)).length
+            'Content-Length': (new util.TextEncoder().encode(postData)).length
         }
     }
 
