@@ -205,14 +205,13 @@ async function run_tests()
 {
     if (!module("S2S", null, null)) return;
 
-    let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL)
-    S2S.setLogEnabled(s2s, true)
-
-    await asyncTest("runScript", 3, () =>
+    // Auto auth
     {
-        // Queue many at once
-        let doneCount = 0;
-        for (let i = 0; i < 3; ++i)
+        await asyncTest("runScriptWithAutoAuth", 1, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, true)
+            S2S.setLogEnabled(s2s, true)
+
             S2S.request(s2s, {
                 service: "script", 
                 operation: "RUN", 
@@ -222,61 +221,183 @@ async function run_tests()
             }, (s2s, result) =>
             {
                 equal(result && result.status, 200, JSON.stringify(result));
-                ++doneCount;
-                if (doneCount == 3) resolve_test();
+                resolve_test();
             })
-    })
-
-    await asyncTest("runScriptWithUnicode", () =>
-    {
-        S2S.request(s2s, {
-            service: "script",
-            operation: "RUN",
-            data: {
-                scriptName: "testScript2", 
-                scriptData: {
-                    profileIds: [
-                        "Some profile ID"
-                    ],
-                    alertContent: {
-                        body: "Player wysłał(a) ci zaproszenie do znajomych"
-                    },
-                    customData: {}
-                }
-            }
-        }, (s2s, result) =>
-        {
-            equal(result.status, 200, JSON.stringify(result));
-            resolve_test();
         })
-    })
 
-    // await asyncTest("heartbeat test", () =>
-    // {
-    //     setTimeout(() =>
-    //     {
-    //         S2S.request(s2s, {
-    //             service: "script",
-    //             operation: "RUN",
-    //             data: {
-    //                 scriptName: "testScript2", 
-    //                 scriptData: {
-    //                     profileIds: [
-    //                         "Some profile ID"
-    //                     ],
-    //                     alertContent: {
-    //                         body: "Player wysłał(a) ci zaproszenie do znajomych"
-    //                     },
-    //                     customData: {}
-    //                 }
-    //             }
-    //         }, (s2s, result) =>
-    //         {
-    //             equal(result.status, 200, JSON.stringify(result));
-    //             resolve_test();
-    //         })
-    //     }, 2 * 60 * 60 * 1000)
-    // })
+        await asyncTest("runManyScriptWithAutoAuth", 3, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, true)
+            S2S.setLogEnabled(s2s, true)
+
+            // Queue many at once
+            let doneCount = 0;
+            for (let i = 0; i < 3; ++i)
+                S2S.request(s2s, {
+                    service: "script", 
+                    operation: "RUN", 
+                    data: {
+                        scriptName: "testScript2" 
+                    }
+                }, (s2s, result) =>
+                {
+                    equal(result && result.status, 200, JSON.stringify(result));
+                    ++doneCount;
+                    if (doneCount == 3) resolve_test();
+                })
+        })
+
+        await asyncTest("runScriptWithUnicodeWithAutoAuth", () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, true)
+            S2S.setLogEnabled(s2s, true)
+
+            S2S.request(s2s, {
+                service: "script",
+                operation: "RUN",
+                data: {
+                    scriptName: "testScript2", 
+                    scriptData: {
+                        profileIds: [
+                            "Some profile ID"
+                        ],
+                        alertContent: {
+                            body: "Player wysłał(a) ci zaproszenie do znajomych"
+                        },
+                        customData: {}
+                    }
+                }
+            }, (s2s, result) =>
+            {
+                equal(result.status, 200, JSON.stringify(result));
+                resolve_test();
+            })
+        })
+
+        // This was to test a edge case, it's a very slow test that takes 2 hours
+        // await asyncTest("heartbeat test WithAutoAuth", () =>
+        // {
+        //     setTimeout(() =>
+        //     {
+        //         S2S.request(s2s, {
+        //             service: "script",
+        //             operation: "RUN",
+        //             data: {
+        //                 scriptName: "testScript2", 
+        //                 scriptData: {
+        //                     profileIds: [
+        //                         "Some profile ID"
+        //                     ],
+        //                     alertContent: {
+        //                         body: "Player wysłał(a) ci zaproszenie do znajomych"
+        //                     },
+        //                     customData: {}
+        //                 }
+        //             }
+        //         }, (s2s, result) =>
+        //         {
+        //             equal(result.status, 200, JSON.stringify(result));
+        //             resolve_test();
+        //         })
+        //     }, 2 * 60 * 60 * 1000)
+        // })
+    }
+
+    // auth
+    {
+        await asyncTest("runScriptWithoutAuth", 1, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            S2S.setLogEnabled(s2s, true)
+        
+            S2S.request(s2s, {
+                service: "script", 
+                operation: "RUN", 
+                data: {
+                    scriptName: "testScript2" 
+                }
+            }, (s2s, result) =>
+            {
+                equal(result && result.status, 403, JSON.stringify(result));
+                resolve_test();
+            })
+        })
+
+        await asyncTest("runManyScriptWithoutAuth", 3, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            S2S.setLogEnabled(s2s, true)
+        
+            // Queue many at once
+            let doneCount = 0;
+            for (let i = 0; i < 3; ++i)
+                S2S.request(s2s, {
+                    service: "script", 
+                    operation: "RUN", 
+                    data: {
+                        scriptName: "testScript2" 
+                    }
+                }, (s2s, result) =>
+                {
+                    equal(result && result.status, 403, JSON.stringify(result));
+                    ++doneCount;
+                    if (doneCount == 3)
+                    {
+                        resolve_test();
+                    }
+                })
+        })
+
+        await asyncTest("runScriptWithAuth", 2, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            S2S.setLogEnabled(s2s, true)
+        
+            S2S.authenticate(s2s, (s2s, result) =>
+            {
+                equal(result && result.status, 200, JSON.stringify(result));
+
+                S2S.request(s2s, {
+                    service: "script", 
+                    operation: "RUN", 
+                    data: {
+                        scriptName: "testScript2" 
+                    }
+                }, (s2s, result) =>
+                {
+                    equal(result && result.status, 200, JSON.stringify(result));
+                    resolve_test();
+                })
+            })
+        })
+
+        await asyncTest("runManyScriptWithAuth", 4, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            S2S.setLogEnabled(s2s, true)
+
+            S2S.authenticate(s2s, (s2s, result) =>
+            {
+                equal(result && result.status, 200, JSON.stringify(result));
+
+                // Queue many at once
+                let doneCount = 0;
+                for (let i = 0; i < 3; ++i)
+                    S2S.request(s2s, {
+                        service: "script", 
+                        operation: "RUN", 
+                        data: {
+                            scriptName: "testScript2" 
+                        }
+                    }, (s2s, result) =>
+                    {
+                        equal(result && result.status, 200, JSON.stringify(result));
+                        ++doneCount;
+                        if (doneCount == 3) resolve_test();
+                    })
+            })
+        })
+    }
 }
 
 async function main()
