@@ -5,6 +5,10 @@ var util = require('util')
 const SERVER_SESSION_EXPIRED = 40365          // Error code for expired session
 const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000 // 30 minutes heartbeat interval
 
+const STATE_DISCONNECTED     = 0
+const STATE_AUTHENTICATING   = 1
+const STATE_CONNECTED        = 2
+
 // Execute the S2S request
 function s2sRequest(context, json, callback)
 {
@@ -101,9 +105,10 @@ function stopHeartbeat(context)
     }
 }
 
-function authenticate(context, callback)
+function authenticateInternal(context, callback)
 {
     packetId = 0
+    context.state = STATE_AUTHENTICATING;
 
     let json = {
         packetId: packetId,
@@ -122,25 +127,78 @@ function authenticate(context, callback)
 
     s2sRequest(context, json, (context, data) =>
     {
-        if (data && data.messageResponses && data.messageResponses.length > 0 && data.messageResponses[0].status === 200)
+        if (data && data.messageResponses && data.messageResponses.length > 0)
         {
             let message = data.messageResponses[0]
 
-            context.authenticated = true
-            context.packetId = data.packetId + 1
-            context.sessionId = message.data.sessionId
+            if (data.messageResponses[0].status === 200)
+            {
+                context.state       = STATE_CONNECTED
+                context.packetId    = data.packetId + 1
+                context.sessionId   = message.data.sessionId
 
-            // Start heartbeat
-            startHeartbeat(context)
+                // Start heartbeat
+                startHeartbeat(context)
+            }
+            else
+            {
+                failAllRequests(context, message);
+            }
 
-            callback(context, message)
+            if (callback)
+                callback(context, message)
         }
         else
         {
+            failAllRequests(context, null);
             exports.disconnect(context)
-            callback(context, null)
+            if (callback)
+                callback(context, null)
         }
     })
+}
+
+function reAuth(context)
+{
+    authenticateInternal(context, (context, data) =>
+    {
+        if (data)
+        {
+            context.requestQueue.push({json: json, callback:callback});
+            if (context.requestQueue.length > 0)
+            {
+                let nextRequest = context.requestQueue[0];
+                request(context, nextRequest.json, nextRequest.callback)
+            }
+        }
+    })
+}
+
+function queueRequest(context, json, callback)
+{
+    context.requestQueue.push({json: json, callback:callback});
+
+    // If only 1 in the queue, then send the request immediately
+    // Also make sure we're not in the process of authenticating
+    if (context.requestQueue.length == 1 && 
+        context.state != STATE_AUTHENTICATING)
+    {
+        request(context, json, callback)
+    }
+}
+
+function failAllRequests(context, message)
+{
+    // Callback to all queued messages
+    let requestQueue = context.requestQueue;
+    context.requestQueue = [];
+    for (let request in context.requestQueue)
+    {
+        if (request.callback)
+        {
+            request.callback(context, message);
+        }
+    }
 }
 
 function request(context, json, callback)
@@ -155,23 +213,38 @@ function request(context, json, callback)
 
     s2sRequest(context, packet, (context, data) =>
     {
-        if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED)
+        if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED && context.retryCount < 3)
         {
-            exports.disconnect(context)
-            exports.request(context, json, callback) // Redo the request, it will try to authenticate again
+            stopHeartbeat(context)
+            context.authenticated = false
+            context.retryCount++
+            context.packetId = 0
+            context.sessionId = null
+            reAuth(context);
             return
         }
 
-        // Error that has no packets
-        if (data && !data.messageResponses)
-        {
-            callback(context, data)
-            return
-        }
+        context.requestQueue.splice(0, 1); // Remove this request
+        context.retryCount = 0;
 
         if (callback)
         {
-            callback(context, data.messageResponses[0])
+            if (data && !data.messageResponses)
+            {
+                // Error that has no packets
+                callback(context, data)
+            }
+            else
+            {
+                callback(context, data.messageResponses[0])
+            }
+        }
+        
+        // Do next request in queue
+        if (context.requestQueue.length > 0)
+        {
+            let nextRequest = context.requestQueue[0];
+            request(context, nextRequest.json, nextRequest.callback)
         }
     })
 }
@@ -183,9 +256,18 @@ function request(context, json, callback)
  * @param serverSecret Server secret key
  * @param url The server url to send the request to. Defaults to the default 
  *            brainCloud portal
+ * @param autoAuth If sets to true, the context will authenticate on the
+ *                 first request if it's not already. Otherwise,
+ *                 authenticate() or authenticateSync() must be called
+ *                 successfully first before doing requests. WARNING: This
+ *                 used to be implied true.
+ * 
+ *                 It is recommended to put this to false, manually
+ *                 call authenticate, and wait for a successful response
+ *                 before proceeding with other requests.
  * @return A new S2S context
  */
-exports.init = (appId, serverName, serverSecret, url) =>
+exports.init = (appId, serverName, serverSecret, url, autoAuth) =>
 {
     if (!url)
     {
@@ -198,10 +280,13 @@ exports.init = (appId, serverName, serverSecret, url) =>
         serverName: serverName,
         serverSecret: serverSecret,
         logEnabled: false,
-        authenticated: false,
+        state: STATE_DISCONNECTED,
         packetId: 0,
-        sessionId: "",
-        heartbeatInternalId: null
+        sessionId: null,
+        heartbeatInternalId: null,
+        autoAuth: autoAuth ? true : false,
+        retryCount: 0,
+        requestQueue: []
     }
 }
 
@@ -212,7 +297,11 @@ exports.init = (appId, serverName, serverSecret, url) =>
 exports.disconnect = context =>
 {
     stopHeartbeat(context)
-    context.authenticated = false
+    context.state = STATE_DISCONNECTED
+    context.retryCount = 0
+    context.packetId = 0
+    context.sessionId = null
+    context.requestQueue = []
 }
 
 /*
@@ -226,6 +315,16 @@ exports.setLogEnabled = (context, enabled) =>
 }
 
 /*
+ * Authenticate
+ * @param context S2S context object returned by init
+ * @param callback Callback function with signature: (context, result)
+ */
+exports.authenticate = (context, callback) =>
+{
+    authenticateInternal(context, callback)
+}
+
+/*
  * Send an S2S request
  * @param context S2S context object returned by init
  * @param json Content object to be sent
@@ -233,22 +332,20 @@ exports.setLogEnabled = (context, enabled) =>
  */
 exports.request = (context, json, callback) =>
 {
-    if (context.authenticated)
+    if (context.state == STATE_DISCONNECTED && context.autoAuth)
     {
-        request(context, json, callback)
-    }
-    else
-    {
-        authenticate(context, (context, data) =>
+        authenticateInternal(context, (context, result) =>
         {
-            if (data)
+            if (context.state == STATE_CONNECTED && 
+                result && result.status == 200)
             {
-                request(context, json, callback)
+                if (context.requestQueue.length > 0)
+                {
+                    let nextRequest = context.requestQueue[0];
+                    request(context, nextRequest.json, nextRequest.callback)
+                }
             }
-            else if (callback)
-            {
-                callback(context, null)
-            }
-        })
+        });
     }
+    queueRequest(context, json, callback);
 }
