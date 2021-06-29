@@ -120,7 +120,7 @@ async function asyncTest(name, expected, testFn)
         catch (e)
         {
             console.log(e);
-            process.exit(-1);
+            process.exit(1);
         }
     }
     if (testFn)
@@ -165,7 +165,7 @@ async function asyncTest(name, expected, testFn)
         catch (e)
         {
             console.log(e);
-            process.exit(-1);
+            process.exit(1);
         }
     }
 }
