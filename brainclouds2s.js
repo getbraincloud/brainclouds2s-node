@@ -81,12 +81,14 @@ function startHeartbeat(context)
     stopHeartbeat(context)
     context.heartbeatInternalId = setInterval(() =>
     {
-        console.log("Heartbeat")
-        request({
+        if (context.logEnabled)
+        {    
+            console.log("Heartbeat")
+        }
+        request(context, {
             service: "heartbeat",
-            operation: "HEARTBEAT",
-            data: null
-        }, data =>
+            operation: "HEARTBEAT"
+        }, (context, data) =>
         {
             if (!(data && data.status === 200))
             {
