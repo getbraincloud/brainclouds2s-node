@@ -205,7 +205,39 @@ async function run_tests()
 {
     if (!module("S2S", null, null)) return;
 
+    // Heartbeat test (This can be a long test, keep that commented for now)
+    // When testing that, change HEARTBEAT_INTERVALE_MS to 10sec in brainclouds2s.js
+    if (false)
+    {
+        await asyncTest("hearbeat", 2, () =>
+        {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            S2S.setLogEnabled(s2s, true)
+        
+            S2S.authenticate(s2s, (s2s, result) =>
+            {
+                equal(result && result.status, 200, JSON.stringify(result));
+
+                console.log(`Waiting for session to timeout for 25sec`)
+                setTimeout(function() {
+                    S2S.request(s2s, {
+                        service: "script", 
+                        operation: "RUN", 
+                        data: {
+                            scriptName: "testScript2" 
+                        }
+                    }, (s2s, result) =>
+                    {
+                        equal(result && result.status, 200, JSON.stringify(result));
+                        resolve_test();
+                    })
+                }, 25 * 1000)
+            })
+        })
+    }
+
     // Auto auth
+    // if (false)
     {
         await asyncTest("runScriptWithAutoAuth", 1, () =>
         {
@@ -304,6 +336,7 @@ async function run_tests()
     }
 
     // auth
+    // if (false)
     {
         await asyncTest("runScriptWithoutAuth", 1, () =>
         {
