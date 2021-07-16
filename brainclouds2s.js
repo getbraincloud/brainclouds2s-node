@@ -231,14 +231,14 @@ function request(context, json, callback)
 
         if (callback)
         {
-            if (data && !data.messageResponses)
+            if (data && data.messageResponses && data.messageResponses.length > 0)
             {
-                // Error that has no packets
-                callback(context, data)
+                callback(context, data.messageResponses[0])
             }
             else
             {
-                callback(context, data.messageResponses[0])
+                // Error that has no packets
+                callback(context, data)
             }
         }
         
