@@ -273,7 +273,7 @@ exports.init = (appId, serverName, serverSecret, url, autoAuth) =>
 {
     if (!url)
     {
-        url = "sharedprod.braincloudservers.com"
+        url = "api.braincloudservers.com"
     }
 
     return {
