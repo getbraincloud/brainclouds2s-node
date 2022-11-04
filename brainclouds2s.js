@@ -54,15 +54,17 @@ function s2sRequest(context, json, callback)
                     try {
                         let dataJson = JSON.parse(data)
                         callback(context, dataJson)
-                    } catch (error) {
+                    } 
+                    catch (error) 
+                    {
                         if (context.logEnabled)
-                            {
-                                console.log(`[S2S Error ${context.appId}] ${error}`)
-                            }
+                        {
+                            console.log(`[S2S Error ${context.appId}] ${error}`)
+                        }
                         if (callback)
                         {
                             callback(context, null)
-                         }
+                        }
                     }
                     
                 }
