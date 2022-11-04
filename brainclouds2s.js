@@ -50,8 +50,21 @@ function s2sRequest(context, json, callback)
             {
                 if (data)
                 {
-                    let dataJson = JSON.parse(data)
-                    callback(context, dataJson)
+                    
+                    try {
+                        let dataJson = JSON.parse(data)
+                        callback(context, dataJson)
+                    } catch (error) {
+                        if (context.logEnabled)
+                            {
+                                console.log(`[S2S Error ${context.appId}] ${error}`)
+                            }
+                        if (callback)
+                        {
+                            callback(context, null)
+                         }
+                    }
+                    
                 }
                 else
                 {
