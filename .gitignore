@@ -61,3 +61,4 @@ typings/
 .next
 
 ids.txt
+package-lock.json
