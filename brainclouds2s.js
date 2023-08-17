@@ -243,9 +243,15 @@ function request(context, json, callback)
     console.log("packetId++");  // TEMP LOG - we are seeing this though...
     context.packetId++
 
+    console.log("requestQueue length: " + context.requestQueue.length);
+    for(var i = 0; i < context.requestQueue.length; i++){
+        console.log("requestQueue item " + (i + 1) + " json: " + JSON.stringify(context.requestQueue.json));
+    }
+
     console.log("request().s2sRequest()");  // TEMP LOG - and this...
     s2sRequest(context, packet, (context, data) =>
     {
+        console.log("request.s2sRequest() callback");   // TEMP LOG
         if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED && context.retryCount < 3)
         {
             console.log("if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED && context.retryCount < 3)");    // TEMP LOG
@@ -258,9 +264,11 @@ function request(context, json, callback)
             return
         }
 
+        /*
         console.log("context.requestQueue.splice"); // TEMP LOG
         context.requestQueue.splice(0, 1); // Remove this request
         context.retryCount = 0;
+        */
 
         if (callback)
         {
@@ -276,6 +284,11 @@ function request(context, json, callback)
                 callback(context, data)
             }
         }
+
+        // Copied here
+        console.log("context.requestQueue.splice"); // TEMP LOG
+        context.requestQueue.splice(0, 1); // Remove this request
+        context.retryCount = 0;
         
         // Do next request in queue
         console.log("Do next request in queue");    // TEMP LOG
@@ -286,8 +299,6 @@ function request(context, json, callback)
             request(context, nextRequest.json, nextRequest.callback)
         }
     })
-
-    console.log("End of request()");    // TEMP LOG
 }
 
 /*
