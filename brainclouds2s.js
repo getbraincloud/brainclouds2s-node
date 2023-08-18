@@ -12,12 +12,11 @@ const STATE_CONNECTED        = 2
 // Execute the S2S request
 function s2sRequest(context, json, callback)
 {
-    console.log("s2sRequest()");    // TEMP LOG
     var postData = JSON.stringify(json)
 
     if (context.logEnabled)
     {
-        console.log(`[S2S SENDING    ${context.appId}] ${postData}`)
+        console.log(`[S2S SEND ${context.appId}] ${postData}`)
     }
 
     var options = {
@@ -37,7 +36,6 @@ function s2sRequest(context, json, callback)
         // A chunk of data has been recieved.
         res.on('data', chunk =>
         {
-            console.log("res.on('data')");  // TEMP LOG
             data += chunk
         })
         
@@ -46,22 +44,19 @@ function s2sRequest(context, json, callback)
         {
             if (context.logEnabled)
             {
-                console.log(`[S2S RCV ${context.appId}] ${data}`)
+                console.log(`[S2S ReCV ${context.appId}] ${data}`)
             }
             if (callback)
             {
-                console.log("if (callback)");   // TEMP LOG
                 if (data)
                 {
                     
                     try {
-                        console.log("try callback");    // TEMP LOG
                         let dataJson = JSON.parse(data)
                         callback(context, dataJson)
                     } 
                     catch (error) 
                     {
-                        console.log("catch (error)");   // TEMP LOG
                         if (context.logEnabled)
                         {
                             console.log(`[S2S Error ${context.appId}] ${error}`)
@@ -75,7 +70,6 @@ function s2sRequest(context, json, callback)
                 }
                 else
                 {
-                    console.log("else { callback"); // TEMP LOG
                     callback(context, null)
                 }
             }
@@ -130,7 +124,6 @@ function stopHeartbeat(context)
 
 function authenticateInternal(context, callback)
 {
-    console.log("authenticateInternal()");  // TEMP LOG
     packetId = 0
     context.state = STATE_AUTHENTICATING;
 
@@ -184,12 +177,10 @@ function authenticateInternal(context, callback)
 
 function reAuth(context)
 {
-    console.log("reAuth()");    // TEMP LOG
     authenticateInternal(context, (context, data) =>
     {
         if (data)
         {
-            console.log("context.requestQueue push"); // TEMP LOG
             context.requestQueue.push({json: json, callback:callback});
             if (context.requestQueue.length > 0)
             {
@@ -202,17 +193,13 @@ function reAuth(context)
 
 function queueRequest(context, json, callback)
 {
-    console.log("queueRequest()");  // TEMP LOG
-    console.log("requestQueue length pre push: " + context.requestQueue.length + " now push()");
     context.requestQueue.push({json: json, callback:callback});
-    console.log("requestQueue length after push: " + context.requestQueue.length);
 
     // If only 1 in the queue, then send the request immediately
     // Also make sure we're not in the process of authenticating
     if (context.requestQueue.length == 1 && 
         context.state != STATE_AUTHENTICATING)
     {
-        console.log("context.requestQueue.length == 1");    // TEMP LOG
         request(context, json, callback)
     }
 }
@@ -233,28 +220,18 @@ function failAllRequests(context, message)
 
 function request(context, json, callback)
 {
-    console.log("request()");   // TEMP LOG - we aren't seeing this... why??
     let packet = {
         packetId: context.packetId,
         sessionId: context.sessionId,
         messages: [json]
     }
 
-    console.log("packetId++");  // TEMP LOG - we are seeing this though...
     context.packetId++
 
-    console.log("requestQueue length: " + context.requestQueue.length);
-    for(var i = 0; i < context.requestQueue.length; i++){
-        console.log("requestQueue item " + (i + 1) + " json: " + JSON.stringify(context.requestQueue.json));
-    }
-
-    console.log("request().s2sRequest()");  // TEMP LOG - and this...
     s2sRequest(context, packet, (context, data) =>
     {
-        console.log("request.s2sRequest() callback");   // TEMP LOG
         if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED && context.retryCount < 3)
         {
-            console.log("if (data && data.status != 200 && data.reason_code === SERVER_SESSION_EXPIRED && context.retryCount < 3)");    // TEMP LOG
             stopHeartbeat(context)
             context.authenticated = false
             context.retryCount++
@@ -264,37 +241,25 @@ function request(context, json, callback)
             return
         }
 
-        /*
-        console.log("context.requestQueue.splice"); // TEMP LOG
-        context.requestQueue.splice(0, 1); // Remove this request
-        context.retryCount = 0;
-        */
-
         if (callback)
         {
             if (data && data.messageResponses && data.messageResponses.length > 0)
             {
-                console.log("if (data && data.messageResponses && data.messageResponses.length > 0)");    // TEMP LOG
                 callback(context, data.messageResponses[0])
             }
             else
             {
                 // Error that has no packets
-                console.log("Error that has no packets");    // TEMP LOG
                 callback(context, data)
             }
         }
 
-        // Copied here
-        console.log("context.requestQueue.splice"); // TEMP LOG
-        context.requestQueue.splice(0, 1); // Remove this request
+        context.requestQueue.splice(0, 1); // Remove this request from the queue
         context.retryCount = 0;
         
         // Do next request in queue
-        console.log("Do next request in queue");    // TEMP LOG
         if (context.requestQueue.length > 0)
         {
-            console.log("if context.requestQueue.length > 0");  // TEMP LOG
             let nextRequest = context.requestQueue[0];
             request(context, nextRequest.json, nextRequest.callback)
         }
@@ -384,10 +349,8 @@ exports.authenticate = (context, callback) =>
  */
 exports.request = (context, json, callback) =>
 {
-    console.log("exports.request()");   // TEMP LOG
     if (context.state == STATE_DISCONNECTED && context.autoAuth)
     {
-        console.log("context.state == STATE_DISCONNECTED"); // TEMP LOG
         authenticateInternal(context, (context, result) =>
         {
             if (context.state == STATE_CONNECTED && 
