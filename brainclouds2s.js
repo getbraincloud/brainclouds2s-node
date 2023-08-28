@@ -223,9 +223,16 @@ function request(context, json, callback) {
 }
 
 function callCallback(callback, context, data) {
-    
-    // TODO:  see s2s-java
-    callback(context, data);
+    if (callback != null) {
+        try {
+            callback(context, data);
+        }
+        catch (error) {
+            if (context.logEnabled) {
+                console.log(`[S2S Error ${context.appId}] ${error}`)
+            }
+        }
+    }
 }
 
 /*
