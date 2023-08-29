@@ -2,8 +2,8 @@ var https = require('https')
 var util = require('util')
 
 // Constants
-const SERVER_SESSION_EXPIRED = 40365          // Error code for expired session
-const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000 // 30 minutes heartbeat interval
+const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
+const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000   // 30 minutes heartbeat interval
 
 const STATE_DISCONNECTED = 0
 const STATE_AUTHENTICATING = 1
@@ -203,11 +203,11 @@ function request(context, json, callback) {
 
         if (callback) {
             if (data && data.messageResponses && data.messageResponses.length > 0) {
-                callCallback(callback, context, data.messageResponses[0]) // TODO:  callCallback
+                callCallback(callback, context, data.messageResponses[0])
             }
             else {
                 // Error that has no packets
-                callCallback(callback, context, data) // TODO:  callCallback
+                callCallback(callback, context, data)
             }
         }
 
@@ -222,6 +222,12 @@ function request(context, json, callback) {
     })
 }
 
+/**
+ * Invoke a given callback.
+ * @param callback Function to be executed
+ * @param context S2S context object
+ * @param data Content object to be sent
+ */
 function callCallback(callback, context, data) {
     if (callback != null) {
         try {
