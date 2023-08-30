@@ -40,35 +40,29 @@ function s2sRequest(context, json, callback) {
             if (context.logEnabled) {
                 console.log(`[S2S RECV ${context.appId}] ${data}`)
             }
-            if (callback) {
-                if (data) {
+            if (data) {
 
-                    try {
-                        let dataJson = JSON.parse(data)
-                        callCallback(callback, context, dataJson)
-                    }
-                    catch (error) {
-                        if (context.logEnabled) {
-                            console.log(`[S2S Error ${context.appId}] ${error}`)
-                        }
-                        if (callback) {
-                            callCallback(callback, context, null)
-                        }
-                    }
-
+                try {
+                    let dataJson = JSON.parse(data)
+                    callCallback(callback, context, dataJson)
                 }
-                else {
+                catch (error) {
+                    if (context.logEnabled) {
+                        console.log(`[S2S Error ${context.appId}] ${error}`)
+                    }
                     callCallback(callback, context, null)
                 }
+
+            }
+            else {
+                callCallback(callback, context, null)
             }
         })
     }).on("error", err => {
         if (context.logEnabled) {
             console.log(`[S2S Error ${context.appId}] ${err.message}`)
         }
-        if (callback) {
-            callCallback(callback, context, null)
-        }
+        callCallback(callback, context, null)
     })
 
     // write data to request body
@@ -135,14 +129,12 @@ function authenticateInternal(context, callback) {
                 failAllRequests(context, message);
             }
 
-            if (callback)
-                callCallback(callback, context, message)
+            callCallback(callback, context, message)
         }
         else {
             failAllRequests(context, null);
             exports.disconnect(context)
-            if (callback)
-                callCallback(callback, context, null)
+            callCallback(callback, context, null)
         }
     })
 }
@@ -202,15 +194,13 @@ function request(context, json, callback) {
             return
         }
 
-        if (callback) {
-            if (data && data.messageResponses && data.messageResponses.length > 0) {
-                callCallback(callback, context, data.messageResponses[0])
-            }
-            else {
-                
-                // Error that has no packets
-                callCallback(callback, context, data)
-            }
+        if (data && data.messageResponses && data.messageResponses.length > 0) {
+            callCallback(callback, context, data.messageResponses[0])
+        }
+        else {
+            
+            // Error that has no packets
+            callCallback(callback, context, data)
         }
 
         // This request is complete and safe to remove from queue after checking for callback
