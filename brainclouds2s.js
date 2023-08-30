@@ -171,6 +171,7 @@ function queueRequest(context, json, callback) {
 }
 
 function failAllRequests(context, message) {
+    
     // Callback to all queued messages
     let requestQueue = context.requestQueue;
     context.requestQueue = [];
@@ -206,11 +207,13 @@ function request(context, json, callback) {
                 callCallback(callback, context, data.messageResponses[0])
             }
             else {
+                
                 // Error that has no packets
                 callCallback(callback, context, data)
             }
         }
 
+        // This request is complete and safe to remove from queue after checking for callback
         context.requestQueue.splice(0, 1); // Remove this request from the queue
         context.retryCount = 0;
 
@@ -234,9 +237,7 @@ function callCallback(callback, context, data) {
             callback(context, data);
         }
         catch (error) {
-            if (context.logEnabled) {
-                console.log(`[S2S Error ${context.appId}] ${error}`)
-            }
+            console.log(`[S2S Error ${context.appId}] ${error}`)
         }
     }
 }
