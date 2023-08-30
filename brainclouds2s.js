@@ -46,15 +46,14 @@ function s2sRequest(context, json, callback) {
                     responseData = JSON.parse(data);
                 }
                 catch (error) {
-                    console.log(`[S2S Error ${context.appId}] ${error}`)
-                    console.log("Failed to parse response");
+                    console.log(`[S2S Error parsing response data ${context.appId}] ${error}`)
                 }
             }
             callCallback(callback, context, responseData)
         })
     }).on("error", err => {
         if (context.logEnabled) {
-            console.log(`[S2S Error ${context.appId}] ${err.message}`)
+            console.log(`[S2S Error making request ${context.appId}] ${err.message}`)
         }
         callCallback(callback, context, null)
     })
@@ -197,7 +196,7 @@ function request(context, json, callback) {
             callCallback(callback, context, data)
         }
 
-        // This request is complete and safe to remove from queue after checking for callback
+        // This request is complete and safe to remove from queue after invoking callback
         context.requestQueue.splice(0, 1); // Remove this request from the queue
         context.retryCount = 0;
 
@@ -221,7 +220,7 @@ function callCallback(callback, context, data) {
             callback(context, data);
         }
         catch (error) {
-            console.log(`[S2S Error ${context.appId}] ${error}`)
+            console.log(`[S2S Callback Error ${context.appId}] ${error}`)
         }
     }
 }
