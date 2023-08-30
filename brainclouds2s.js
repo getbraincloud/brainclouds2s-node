@@ -40,23 +40,17 @@ function s2sRequest(context, json, callback) {
             if (context.logEnabled) {
                 console.log(`[S2S RECV ${context.appId}] ${data}`)
             }
+            let responseData = null;
             if (data) {
-
                 try {
-                    let dataJson = JSON.parse(data)
-                    callCallback(callback, context, dataJson)
+                    responseData = JSON.parse(data);
                 }
                 catch (error) {
-                    if (context.logEnabled) {
-                        console.log(`[S2S Error ${context.appId}] ${error}`)
-                    }
-                    callCallback(callback, context, null)
+                    console.log(`[S2S Error ${context.appId}] ${error}`)
+                    console.log("Failed to parse response");
                 }
-
             }
-            else {
-                callCallback(callback, context, null)
-            }
+            callCallback(callback, context, responseData)
         })
     }).on("error", err => {
         if (context.logEnabled) {
