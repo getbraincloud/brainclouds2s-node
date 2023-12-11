@@ -1,7 +1,33 @@
 
 const fs = require('fs')
 let S2S = require('./brainclouds2s.js');
-//const { resolve } = require('path/win32');
+
+/**
+ * Tests are running within NodeJS not a browser.
+ *
+ * As a result, we need to set up the global 'window' object and
+ * initialize the XMLHttpRequest, WebSocket and LocalStorage facilities.
+ */
+
+// Set up XMLHttpRequest.
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+window = {
+    XMLHttpRequest: XMLHttpRequest
+};
+XMLHttpRequest.UNSENT = 0;
+XMLHttpRequest.OPENED = 1;
+XMLHttpRequest.HEADERS_RECEIVED = 2;
+XMLHttpRequest.LOADING = 3;
+XMLHttpRequest.DONE = 4;
+
+// Set up WebSocket.
+WebSocket = require('ws');
+
+// Set up LocalStorage.
+LocalStorage = require('node-localstorage/LocalStorage').LocalStorage;
+os = require('os');
+var configDir = os.homedir() + "/.bciot";
+localStorage = new LocalStorage(configDir);
 
 var fail_log = [];
 var filters = process.argv[2];
