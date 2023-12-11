@@ -432,7 +432,7 @@ async function run_tests()
             })
         })
 
-        /*
+        
         await asyncTest("RTT", 4, () => {
             let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
             let channelID = GAME_ID + ":sy:mysyschannel"
@@ -501,7 +501,7 @@ async function run_tests()
 
                 resolve_test()
             }
-        })*/
+        })
     }
 }
 

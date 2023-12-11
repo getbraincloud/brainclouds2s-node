@@ -1,6 +1,7 @@
 var https = require('https')
 var util = require('util')
 
+/*
 // Set up XMLHttpRequest.
 XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 window = {
@@ -17,6 +18,7 @@ LocalStorage = require('node-localstorage/LocalStorage').LocalStorage;
 os = require('os');
 var configDir = os.homedir() + "/.bciot";
 localStorage = new LocalStorage(configDir);
+*/
 
 // Constants
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
