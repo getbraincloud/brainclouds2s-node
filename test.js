@@ -1,7 +1,7 @@
 
 const fs = require('fs')
 let S2S = require('./brainclouds2s.js');
-const { resolve } = require('path/win32');
+//const { resolve } = require('path/win32');
 
 var fail_log = [];
 var filters = process.argv[2];
