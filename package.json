@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
   },
-  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme"
+  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme",
+  "dependencies": {
+    "node-localstorage": "^3.0.5",
+    "ws": "^8.14.2",
+    "xmlhttprequest": "^1.8.0"
+  }
 }
