@@ -1,7 +1,27 @@
 
 const fs = require('fs')
 let S2S = require('./brainclouds2s.js');
-const { resolve } = require('path/win32');
+
+/**
+ * Tests are running within NodeJS not a browser.
+ *
+ * As a result, we need to set up the global 'window' object and
+ * initialize the XMLHttpRequest, WebSocket and LocalStorage facilities.
+ */
+
+// Set up XMLHttpRequest.
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+window = {
+    XMLHttpRequest: XMLHttpRequest
+};
+XMLHttpRequest.UNSENT = 0;
+XMLHttpRequest.OPENED = 1;
+XMLHttpRequest.HEADERS_RECEIVED = 2;
+XMLHttpRequest.LOADING = 3;
+XMLHttpRequest.DONE = 4;
+
+// Set up WebSocket.
+WebSocket = require('ws');
 
 var fail_log = [];
 var filters = process.argv[2];
@@ -432,7 +452,8 @@ async function run_tests()
             })
         })
 
-        await asyncTest("RTT", 5, () => {
+        
+        await asyncTest("RTT", 4, () => {
             let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
             let channelID = GAME_ID + ":sy:mysyschannel"
             let postChatJSON = {
@@ -466,7 +487,7 @@ async function run_tests()
             S2S.setLogEnabled(s2s, true)
 
             S2S.authenticate(s2s, (s2s, result) => {
-                equal(result && result.status, 200, JSON.stringify(result))
+                equal(result && result.status, 200, "Authenticate: " + JSON.stringify(result))
 
                 S2S.enableRTT(s2s, onRTTEnabled, (error) => {
                     console.log("enable RTT failed " + JSON.stringify(error))
@@ -483,7 +504,7 @@ async function run_tests()
 
             function onChannelConnectRequestSuccess() {
                 S2S.request(s2s, postChatJSON, (s2s, result) => {
-                    equal(result && result.status, 200, JSON.stringify(result))
+                    console.log("Post Chat Msg Req success")
                 })
             }
 

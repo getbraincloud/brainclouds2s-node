@@ -1,23 +1,6 @@
 var https = require('https')
 var util = require('util')
 
-// Set up XMLHttpRequest.
-XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-window = {
-    XMLHttpRequest: XMLHttpRequest
-};
-XMLHttpRequest.UNSENT = 0;
-XMLHttpRequest.OPENED = 1;
-XMLHttpRequest.HEADERS_RECEIVED = 2;
-XMLHttpRequest.LOADING = 3;
-XMLHttpRequest.DONE = 4;
-
-// Set up LocalStorage.
-LocalStorage = require('node-localstorage/LocalStorage').LocalStorage;
-os = require('os');
-var configDir = os.homedir() + "/.bciot";
-localStorage = new LocalStorage(configDir);
-
 // Constants
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
 const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000   // 30 minutes heartbeat interval
@@ -26,8 +9,7 @@ const STATE_DISCONNECTED = 0
 const STATE_AUTHENTICATING = 1
 const STATE_CONNECTED = 2
 
-// WebSocket
-WebSocket = require('ws')
+// RTT
 var socket = null
 
 var rttConnectionState = {
@@ -360,12 +342,12 @@ function onSocketOpen(e) {
                 }
             }
         };
-
+        
         var browserName = getBrowserName();
         if (browserName) {
             request.data.system.browser = browserName;
         }
-
+        
         request.data.auth = rttAuth;
 
         if (debugEnabled) {
