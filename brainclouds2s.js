@@ -343,11 +343,12 @@ function onSocketOpen(e) {
             }
         };
         
+        /*
         var browserName = getBrowserName();
         if (browserName) {
             request.data.system.browser = browserName;
         }
-        
+        */
 
         request.data.auth = rttAuth;
 

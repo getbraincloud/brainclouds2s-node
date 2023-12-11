@@ -23,11 +23,13 @@ XMLHttpRequest.DONE = 4;
 // Set up WebSocket.
 WebSocket = require('ws');
 
+/*
 // Set up LocalStorage.
 LocalStorage = require('node-localstorage/LocalStorage').LocalStorage;
 os = require('os');
 var configDir = os.homedir() + "/.bciot";
 localStorage = new LocalStorage(configDir);
+*/
 
 var fail_log = [];
 var filters = process.argv[2];
