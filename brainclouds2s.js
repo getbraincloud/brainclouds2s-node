@@ -1,6 +1,8 @@
 var https = require('https')
 var util = require('util')
 
+RTT = require('./brainclouds2s-rtt')
+
 // Constants
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
 const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000   // 30 minutes heartbeat interval
@@ -313,4 +315,46 @@ exports.request = (context, json, callback) => {
         });
     }
     queueRequest(context, json, callback);
+}
+
+/**
+ * Attempts to establish an RTT connection to the brainCloud servers.
+ * @param {*} context object containing session data (appId, serverName, etc.)
+ * @param {*} success function to be invoked when an RTT connection has been established
+ * @param {*} failure function to be invoked if an RTT connection is not established
+ * @returns if RTT is already enabled
+ */
+exports.enableRTT = (context, success, failure) => {
+    RTT.enableRTT(context, success, failure)
+}
+
+/**
+ * Disables the RTT connection.
+ * @returns if RTT is not enabled
+ */
+exports.disableRTT = () => {
+    RTT.disableRTT()
+}
+
+/**
+ * Returns whether or not RTT is enabled.
+ * @returns True if RTT is enabled
+ */
+exports.rttIsEnabled = () => {
+    return RTT.rttIsEnabled()
+}
+
+/**
+ * Registers a callback for all RTT services
+ * @param {*} callback function to be invoked when receiving RTT updates
+ */
+exports.registerRTTRawCallback = (callback) => {
+    RTT.registerRTTRawCallback(callback)
+}
+
+/**
+ * Deregisters the RTT callback.
+ */
+exports.deregisterRTTRawCallback = () => {
+    RTT.deregisterRTTRawCallback()
 }

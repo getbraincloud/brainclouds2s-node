@@ -1,7 +1,6 @@
 
 const fs = require('fs')
 let S2S = require('./brainclouds2s.js');
-let S2SRTT = require('./brainclouds2s-rtt.js')
 
 /**
  * Tests are running within NodeJS not a browser.
@@ -489,15 +488,15 @@ async function run_tests()
             S2S.authenticate(s2s, (s2s, result) => {
                 equal(result && result.status, 200, "Authenticate: " + JSON.stringify(result))
 
-                S2SRTT.enableRTT(s2s, onRTTEnabled, (error) => {
+                S2S.enableRTT(s2s, onRTTEnabled, (error) => {
                     console.log("enable RTT failed " + JSON.stringify(error))
                     resolve_test()
                 })
             })
 
             function onRTTEnabled() {
-                equal(S2SRTT.rttIsEnabled(), true, "RTT enabled")
-                S2SRTT.registerRTTRawCallback(onRTTCallbackReceived)
+                equal(S2S.rttIsEnabled(), true, "RTT enabled")
+                S2S.registerRTTRawCallback(onRTTCallbackReceived)
 
                 S2S.request(s2s, channelConnectJSON, onChannelConnectRequestSuccess)
             }
@@ -515,9 +514,9 @@ async function run_tests()
 
                 equal(msgReceived, true, "Received chat message - " + JSON.stringify(message))
 
-                S2SRTT.disableRTT()
+                S2S.disableRTT()
 
-                equal(S2SRTT.rttIsEnabled(), false, "RTT disabled")
+                equal(S2S.rttIsEnabled(), false, "RTT disabled")
 
                 resolve_test()
             }
