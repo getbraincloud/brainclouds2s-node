@@ -452,7 +452,6 @@ async function run_tests()
             })
         })
 
-        
         await asyncTest("RTT", 4, () => {
             let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
             let channelID = GAME_ID + ":sy:mysyschannel"
@@ -496,7 +495,7 @@ async function run_tests()
             })
 
             function onRTTEnabled() {
-                equal(S2S.isRTTEnabled(), true, "RTT enabled")
+                equal(S2S.rttIsEnabled(), true, "RTT enabled")
                 S2S.registerRTTRawCallback(onRTTCallbackReceived)
 
                 S2S.request(s2s, channelConnectJSON, onChannelConnectRequestSuccess)
@@ -517,7 +516,7 @@ async function run_tests()
 
                 S2S.disableRTT()
 
-                equal(S2S.isRTTEnabled(), false, "RTT disabled")
+                equal(S2S.rttIsEnabled(), false, "RTT disabled")
 
                 resolve_test()
             }
