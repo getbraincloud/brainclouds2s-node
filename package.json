@@ -1,6 +1,6 @@
 {
   "name": "brainclouds2s",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "brianCloud S2S module",
   "main": "brainclouds2s.js",
   "scripts": {
@@ -19,5 +19,9 @@
   "bugs": {
     "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
   },
-  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme"
+  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme",
+  "dependencies": {
+    "ws": "^8.14.2",
+    "xmlhttprequest": "^1.8.0"
+  }
 }

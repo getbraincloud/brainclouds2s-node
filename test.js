@@ -1,6 +1,27 @@
 
 const fs = require('fs')
-let S2S = require('./brainclouds2s.js')
+let S2S = require('./brainclouds2s.js');
+
+/**
+ * Tests are running within NodeJS not a browser.
+ *
+ * As a result, we need to set up the global 'window' object and
+ * initialize the XMLHttpRequest, WebSocket and LocalStorage facilities.
+ */
+
+// Set up XMLHttpRequest.
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+window = {
+    XMLHttpRequest: XMLHttpRequest
+};
+XMLHttpRequest.UNSENT = 0;
+XMLHttpRequest.OPENED = 1;
+XMLHttpRequest.HEADERS_RECEIVED = 2;
+XMLHttpRequest.LOADING = 3;
+XMLHttpRequest.DONE = 4;
+
+// Set up WebSocket.
+WebSocket = require('ws');
 
 var fail_log = [];
 var filters = process.argv[2];
@@ -429,6 +450,76 @@ async function run_tests()
                         if (doneCount == 3) resolve_test();
                     })
             })
+        })
+
+        await asyncTest("RTT", 4, () => {
+            let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false)
+            let channelID = GAME_ID + ":sy:mysyschannel"
+            let postChatJSON = {
+                service: "chat",
+                operation: "SYS_POST_CHAT_MESSAGE",
+                data: {
+                    channelId: channelID,
+                    content: {
+                        text: "Hello World",
+                        custom: {
+                            somethingCustom: "wow"
+                        }
+                    },
+                    recordInHistory: false,
+                    from: {
+                        name: "Homer",
+                        pic: "http://www.simpsons.test/homer.jpg"
+                    }
+                }
+            }
+            let channelConnectJSON = {
+                service: "chat",
+                operation: "SYS_CHANNEL_CONNECT",
+                data: {
+                    channelId: channelID,
+                    maxReturn: 10
+                }
+            }
+            let msgReceived = false
+
+            S2S.setLogEnabled(s2s, true)
+
+            S2S.authenticate(s2s, (s2s, result) => {
+                equal(result && result.status, 200, "Authenticate: " + JSON.stringify(result))
+
+                S2S.enableRTT(s2s, onRTTEnabled, (error) => {
+                    console.log("enable RTT failed " + JSON.stringify(error))
+                    resolve_test()
+                })
+            })
+
+            function onRTTEnabled() {
+                equal(S2S.rttIsEnabled(), true, "RTT enabled")
+                S2S.registerRTTRawCallback(onRTTCallbackReceived)
+
+                S2S.request(s2s, channelConnectJSON, onChannelConnectRequestSuccess)
+            }
+
+            function onChannelConnectRequestSuccess() {
+                S2S.request(s2s, postChatJSON, (s2s, result) => {
+                    console.log("Post Chat Msg Req success")
+                })
+            }
+
+            function onRTTCallbackReceived(message) {
+                if (message.service === "chat" && message.operation === "INCOMING") {
+                    msgReceived = true
+                }
+
+                equal(msgReceived, true, "Received chat message - " + JSON.stringify(message))
+
+                S2S.disableRTT()
+
+                equal(S2S.rttIsEnabled(), false, "RTT disabled")
+
+                resolve_test()
+            }
         })
     }
 }

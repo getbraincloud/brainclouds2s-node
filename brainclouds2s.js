@@ -1,6 +1,8 @@
 var https = require('https')
 var util = require('util')
 
+RTT = require('./brainclouds2s-rtt')
+
 // Constants
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
 const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000   // 30 minutes heartbeat interval
@@ -49,13 +51,13 @@ function s2sRequest(context, json, callback) {
                     console.log(`[S2S Error parsing response data ${context.appId}] ${error}`)
                 }
             }
-            callCallback(callback, context, responseData)
+            callCallback(context, responseData, callback)
         })
     }).on("error", err => {
         if (context.logEnabled) {
             console.log(`[S2S Error making request ${context.appId}] ${err.message}`)
         }
-        callCallback(callback, context, null)
+        callCallback(context, null, callback)
     })
 
     // write data to request body
@@ -122,12 +124,12 @@ function authenticateInternal(context, callback) {
                 failAllRequests(context, message);
             }
 
-            callCallback(callback, context, message)
+            callCallback(context, message, callback)
         }
         else {
             failAllRequests(context, null);
             exports.disconnect(context)
-            callCallback(callback, context, null)
+            callCallback(context, null, callback)
         }
     })
 }
@@ -162,7 +164,7 @@ function failAllRequests(context, message) {
     context.requestQueue = [];
     for (let request in context.requestQueue) {
         if (request.callback) {
-            callCallback(request.callback, context, message);
+            callCallback(context, message, request.callback);
         }
     }
 }
@@ -188,12 +190,11 @@ function request(context, json, callback) {
         }
 
         if (data && data.messageResponses && data.messageResponses.length > 0) {
-            callCallback(callback, context, data.messageResponses[0])
+            callCallback(context, data.messageResponses[0], callback)
         }
         else {
-            
             // Error that has no packets
-            callCallback(callback, context, data)
+            callCallback(context, data, callback)
         }
 
         // This request is complete and safe to remove from queue after invoking callback
@@ -210,11 +211,11 @@ function request(context, json, callback) {
 
 /**
  * Invoke a given callback.
- * @param callback Function to be executed
  * @param context S2S context object
  * @param data Content object to be sent
+ * @param callback Function to be executed
  */
-function callCallback(callback, context, data) {
+function callCallback(context, data, callback) {
     if (callback != null) {
         try {
             callback(context, data);
@@ -314,4 +315,46 @@ exports.request = (context, json, callback) => {
         });
     }
     queueRequest(context, json, callback);
+}
+
+/**
+ * Attempts to establish an RTT connection to the brainCloud servers.
+ * @param {*} context object containing session data (appId, serverName, etc.)
+ * @param {*} success function to be invoked when an RTT connection has been established
+ * @param {*} failure function to be invoked if an RTT connection is not established
+ * @returns if RTT is already enabled
+ */
+exports.enableRTT = (context, success, failure) => {
+    RTT.enableRTT(context, success, failure)
+}
+
+/**
+ * Disables the RTT connection.
+ * @returns if RTT is not enabled
+ */
+exports.disableRTT = () => {
+    RTT.disableRTT()
+}
+
+/**
+ * Returns whether or not RTT is enabled.
+ * @returns True if RTT is enabled
+ */
+exports.rttIsEnabled = () => {
+    return RTT.rttIsEnabled()
+}
+
+/**
+ * Registers a callback for all RTT services
+ * @param {*} callback function to be invoked when receiving RTT updates
+ */
+exports.registerRTTRawCallback = (callback) => {
+    RTT.registerRTTRawCallback(callback)
+}
+
+/**
+ * Deregisters the RTT callback.
+ */
+exports.deregisterRTTRawCallback = () => {
+    RTT.deregisterRTTRawCallback()
 }
