@@ -2,7 +2,7 @@
 var https = require('https')
 var util = require('util')
 
-RTT = require('./brainclouds2s-rtt')
+var RTT = require('./brainclouds2s-rtt')
 
 // Constants
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
@@ -91,7 +91,7 @@ function stopHeartbeat(context) {
 }
 
 function authenticateInternal(context, callback) {
-    packetId = 0
+    let packetId = 0
     context.state = STATE_AUTHENTICATING;
 
     let json = {
