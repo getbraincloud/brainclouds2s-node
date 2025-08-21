@@ -1,3 +1,4 @@
+'use strict';
 var https = require('https')
 var util = require('util')
 
