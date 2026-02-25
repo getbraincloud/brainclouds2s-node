@@ -1,6 +1,7 @@
 
 const fs = require('fs')
 let S2S = require('./brainclouds2s.js');
+let GFV3 = require('./brainclouds2s-globalfilev3.js');
 
 /**
  * Tests are running within NodeJS not a browser.
@@ -524,9 +525,251 @@ async function run_tests()
     }
 }
 
+async function run_globalfilev3_tests()
+{
+    if (!module("GlobalFileV3", null, null)) return;
+
+    // Shared state: captured from SysCreateFolder and UploadGlobalFile responses
+    var gfv3FolderTreeId = "";
+    var gfv3FileId = "";
+    var gfv3FileVersion = 1;
+
+    // Test 1 (parity: dotnet #8): SysGetGlobalFileList
+    await asyncTest("sysGetGlobalFileList", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysGetGlobalFileList(s2s, "", true, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysGetGlobalFileList: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 2 (parity: dotnet #9): SysLookupFolder
+    await asyncTest("sysLookupFolder", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysLookupFolder(s2s, "s2s_test_folder", (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysLookupFolder: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 3 (parity: dotnet #10): SysCreateFolder — captures treeId
+    await asyncTest("sysCreateFolder", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysCreateFolder(s2s, "s2s_test_folder", -1, "s2s_test_folder_2",
+                "S2S integration test folder", false, (s2s, result) =>
+            {
+                if (result && result.status === 200 && result.data && result.data.createdTreeId) {
+                    gfv3FolderTreeId = result.data.createdTreeId;
+                }
+                equal(result && result.status, 200, "SysCreateFolder: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 4 (parity: dotnet #11): UploadGlobalFile — captures fileId and version
+    await asyncTest("uploadGlobalFile", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.setLogEnabled(s2s, true);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            var fileData = Buffer.from("Hello from brainCloud S2S file upload test!");
+            GFV3.uploadGlobalFile(s2s, gfv3FolderTreeId, "s2s_test_file.txt", true, fileData,
+                (s2s, result) =>
+            {
+                if (result && result.status === 200 &&
+                    result.data && result.data.fileDetails && result.data.fileDetails.fileDetails) {
+                    var fd = result.data.fileDetails.fileDetails;
+                    gfv3FileId = fd.fileId || gfv3FileId;
+                    gfv3FileVersion = fd.version || gfv3FileVersion;
+                }
+                equal(result && result.status, 200, "UploadGlobalFile: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 5 (parity: dotnet #12): SysGetFileInfo
+    await asyncTest("sysGetFileInfo", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysGetFileInfo(s2s, gfv3FileId, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysGetFileInfo: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 6 (parity: dotnet #13): SysGetFileInfoSimple
+    await asyncTest("sysGetFileInfoSimple", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysGetFileInfoSimple(s2s, "s2s_test_folder/s2s_test_folder_2", "s2s_test_file.txt",
+                (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysGetFileInfoSimple: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 7 (parity: dotnet #14): SysCheckFilenameExists
+    await asyncTest("sysCheckFilenameExists", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysCheckFilenameExists(s2s, "s2s_test_folder/s2s_test_folder_2", "s2s_test_file.txt",
+                (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysCheckFilenameExists: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 8 (parity: dotnet #15): SysCheckFullpathFilenameExists
+    await asyncTest("sysCheckFullpathFilenameExists", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysCheckFullpathFilenameExists(s2s,
+                "s2s_test_folder/s2s_test_folder_2/s2s_test_file.txt", (s2s, result) =>
+            {
+                equal(result && result.status, 200,
+                    "SysCheckFullpathFilenameExists: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 9 (parity: dotnet #16): SysGetGlobalCDNUrl
+    await asyncTest("sysGetGlobalCDNUrl", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysGetGlobalCDNUrl(s2s, gfv3FileId, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysGetGlobalCDNUrl: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 10 (parity: dotnet #17): SysCopyGlobalFile
+    await asyncTest("sysCopyGlobalFile", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysCopyGlobalFile(s2s, gfv3FileId, gfv3FileVersion, gfv3FolderTreeId, -1,
+                "s2s_file_copy.txt", true, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysCopyGlobalFile: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 11 (parity: dotnet #18): SysMoveGlobalFile
+    await asyncTest("sysMoveGlobalFile", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysMoveGlobalFile(s2s, gfv3FileId, gfv3FileVersion, gfv3FolderTreeId, -1,
+                "s2s_file_moved.txt", true, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysMoveGlobalFile: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 12 (parity: dotnet #19): SysRenameFolder
+    await asyncTest("sysRenameFolder", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysRenameFolder(s2s, gfv3FolderTreeId, -1, "s2s_test_folder_renamed", (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysRenameFolder: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 13 (parity: dotnet #20): SysDeleteGlobalFiles — cleanup files
+    await asyncTest("sysDeleteGlobalFiles", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysDeleteGlobalFiles(s2s, gfv3FolderTreeId,
+                "s2s_test_folder/s2s_test_folder_renamed", -1, true, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysDeleteGlobalFiles: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+
+    // Test 14 (parity: dotnet #21): SysDeleteFolder — cleanup folder
+    await asyncTest("sysDeleteFolder", 2, () =>
+    {
+        let s2s = S2S.init(GAME_ID, SERVER_NAME, SERVER_SECRET, S2S_URL, false);
+        S2S.authenticate(s2s, (s2s, result) =>
+        {
+            equal(result && result.status, 200, "Auth: " + JSON.stringify(result));
+            GFV3.sysDeleteFolder(s2s, gfv3FolderTreeId,
+                "s2s_test_folder/s2s_test_folder_renamed", -1, true, (s2s, result) =>
+            {
+                equal(result && result.status, 200, "SysDeleteFolder: " + JSON.stringify(result));
+                resolve_test();
+            });
+        });
+    });
+}
+
 async function main()
 {
     await run_tests();
+    await run_globalfilev3_tests();
 
     console.log(((test_passed === test_count) ? "\x1b[32m[PASSED] " : "\x1b[31m[FAILED] ") + test_passed + "/" + test_count + " passed\x1b[0m");
     console.log(fail_log.join("\n"));
