@@ -1,4 +1,11 @@
+'use strict';
+
 let S2S = require('./brainclouds2s.js');
+
+// Use the native WebSocket if available (Node.js 22+), otherwise fall back to ws
+if (typeof WebSocket === 'undefined') {
+    var WebSocket = require('ws');
+}
 
 var socket = null
 
@@ -163,33 +170,37 @@ function onSocketMessage(e) {
         };
 
         if (typeof e.data === "string") {
-            processResult(e.data);
+            // String data (Node.js ws library or modern browsers) — parse as JSON
+            var parsed = {};
+            try {
+                parsed = JSON.parse(e.data);
+            } catch (err) {
+                console.log("WS RECV parse error: " + err + " data=" + e.data);
+                return;
+            }
+            processResult(parsed);
         } else if (typeof FileReader !== 'undefined') {
-            
-            // Web Browser
+            // Web Browser — binary/blob data
             var reader = new FileReader();
             reader.onload = function () {
                 var parsed = {};
                 try {
                     parsed = JSON.parse(reader.result);
-                }
-                catch (e) {
-                    console.log("WS RECV: " + reader.result);
-                    parsed = JSON.parse(reader.result); // Trigger the error again and let it fail
+                } catch (err) {
+                    console.log("WS RECV parse error: " + err + " data=" + reader.result);
+                    return;
                 }
                 processResult(parsed);
             }
             reader.readAsText(e.data);
         } else {
-            
-            // Node.js
+            // Fallback
             var parsed = {};
             try {
                 parsed = JSON.parse(e.data);
-            }
-            catch (e) {
-                console.log("WS RECV: " + e.data);
-                parsed = JSON.parse(e.data); // Trigger the error again and let it fail
+            } catch (err) {
+                console.log("WS RECV parse error: " + err + " data=" + e.data);
+                return;
             }
             processResult(parsed);
         }
@@ -212,38 +223,45 @@ function onRecv(recv) {
 
 /**
  * Gets the name of the browser being used.
- * @returns name of browser
+ * Returns null in non-browser environments (e.g. Node.js).
+ * @returns name of browser, or null
  */
 function getBrowserName() {
-    // Opera 8.0+
-    var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || (typeof navigator !== 'undefined' && navigator.userAgent.indexOf(' OPR/') >= 0);
+    if (typeof window === 'undefined') {
+        return null; // Node.js environment
+    }
+    try {
+        // Opera 8.0+
+        var isOpera = (!!window.opr && !!window.opr.addons) || !!window.opera || (typeof navigator !== 'undefined' && navigator.userAgent.indexOf(' OPR/') >= 0);
 
-    // Firefox 1.0+
-    var isFirefox = typeof InstallTrigger !== 'undefined';
+        // Firefox 1.0+
+        var isFirefox = typeof InstallTrigger !== 'undefined';
 
-    // Safari 3.0+ "[object HTMLElementConstructor]" 
-    var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+        // Safari 3.0+
+        var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
 
-    // Internet Explorer 6-11
-    var isIE = (typeof document !== 'undefined' && !!document.documentMode);
+        // Internet Explorer 6-11
+        var isIE = (typeof document !== 'undefined' && !!document.documentMode);
 
-    // Edge 20+
-    var isEdge = !isIE && !!window.StyleMedia;
+        // Edge 20+
+        var isEdge = !isIE && !!window.StyleMedia;
 
-    // Chrome 1+
-    var isChrome = !!window.chrome && !!window.chrome.webstore;
+        // Chrome 1+
+        var isChrome = !!window.chrome && !!window.chrome.webstore;
 
-    // Blink engine detection
-    var isBlink = (isChrome || isOpera) && !!window.CSS;
+        // Blink engine detection
+        var isBlink = (isChrome || isOpera) && !!window.CSS;
 
-    if (isOpera) return "opera";
-    if (isFirefox) return "firefox";
-    if (isSafari) return "safari";
-    if (isIE) return "ie";
-    if (isEdge) return "edge";
-    if (isChrome) return "chrome";
-    if (isBlink) return "blink";
-
+        if (isOpera) return "opera";
+        if (isFirefox) return "firefox";
+        if (isSafari) return "safari";
+        if (isIE) return "ie";
+        if (isEdge) return "edge";
+        if (isChrome) return "chrome";
+        if (isBlink) return "blink";
+    } catch (e) {
+        // ignore
+    }
     return null;
 }
 
