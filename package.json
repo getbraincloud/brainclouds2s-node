@@ -15,7 +15,7 @@
     "s2s"
   ],
   "author": "David St-Louis",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
   },
