@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitHeads/brainclouds2s-node.git"
+    "url": "git+https://github.com/getbraincloud/brainclouds2s-node.git"
   },
   "keywords": [
     "braincloud",
@@ -17,9 +17,9 @@
   "author": "David St-Louis",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
+    "url": "https://github.com/getbraincloud/brainclouds2s-node/issues"
   },
-  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme",
+  "homepage": "https://github.com/getbraincloud/brainclouds2s-node#readme",
   "dependencies": {
     "ws": "^8.14.2",
     "xmlhttprequest": "^1.8.0"
