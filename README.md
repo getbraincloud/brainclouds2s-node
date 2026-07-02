@@ -1,6 +1,17 @@
 # brainclouds2s-node
-brainCloud S2S client Node JS library
+brainCloud S2S (server-to-server) client Node JS library
 
+> **Package renamed.** This library now ships as **`@braincloud/s2s`** (the `@braincloud` npm scope). The old unscoped **[`brainclouds2s`](https://www.npmjs.com/package/brainclouds2s)** package is **deprecated** — switch your dependency to `@braincloud/s2s`. The API is unchanged; only the package name moved.
+>
+> **Building a game/app client instead?** This is the server-to-server library. For in-game/app calls use the companion package **[`@braincloud/client`](https://www.npmjs.com/package/@braincloud/client)** (formerly `braincloud`).
+
+## Installation
+
+```bash
+npm install @braincloud/s2s
+```
+
+## Usage
 
 ```
 var brainclouds2s = require('@braincloud/s2s');
