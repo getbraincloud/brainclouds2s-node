@@ -3,7 +3,7 @@ brainCloud S2S client Node JS library
 
 
 ```
-var brainclouds2s = require('brainclouds2s');
+var brainclouds2s = require('@braincloud/s2s');
 
 // Fill in your needed app info
 appId = "00000";
