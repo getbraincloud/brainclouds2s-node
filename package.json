@@ -1,27 +1,30 @@
 {
-  "name": "brainclouds2s",
-  "version": "6.0.0",
-  "description": "brianCloud S2S module",
+  "name": "@braincloud/s2s",
+  "version": "6.0.1",
+  "description": "brainCloud S2S module",
   "main": "brainclouds2s.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitHeads/brainclouds2s-node.git"
+    "url": "git+https://github.com/getbraincloud/brainclouds2s-node.git"
   },
   "keywords": [
     "braincloud",
     "s2s"
   ],
-  "author": "David St-Louis",
-  "license": "ISC",
+  "author": "Steve Jones",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/bitHeads/brainclouds2s-node/issues"
+    "url": "https://github.com/getbraincloud/brainclouds2s-node/issues"
   },
-  "homepage": "https://github.com/bitHeads/brainclouds2s-node#readme",
+  "homepage": "https://github.com/getbraincloud/brainclouds2s-node#readme",
   "dependencies": {
     "ws": "^8.14.2",
     "xmlhttprequest": "^1.8.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
