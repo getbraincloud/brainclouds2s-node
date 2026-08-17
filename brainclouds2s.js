@@ -8,6 +8,23 @@ var RTT = require('./brainclouds2s-rtt')
 const SERVER_SESSION_EXPIRED = 40365    // Error code for expired session
 const HEARTBEAT_INTERVALE_MS = 60 * 30 * 1000   // 30 minutes heartbeat interval
 
+const SENSITIVE_KEYS = ['secretKey', 'serverSecret', 'ApiKey', 'secret', 'token', 'X-RTT-SECRET']
+
+function redactSecretKeys(s) {
+    for (const key of SENSITIVE_KEYS) {
+        const search = `"${key}":"`
+        let idx = s.indexOf(search)
+        while (idx >= 0) {
+            const valueStart = idx + search.length
+            const valueEnd = s.indexOf('"', valueStart)
+            if (valueEnd < 0) break
+            s = s.slice(0, valueStart) + '[REDACTED]' + s.slice(valueEnd)
+            idx = s.indexOf(search, valueStart + 10)
+        }
+    }
+    return s
+}
+
 const STATE_DISCONNECTED = 0
 const STATE_AUTHENTICATING = 1
 const STATE_CONNECTED = 2
@@ -17,7 +34,8 @@ function s2sRequest(context, json, callback) {
     var postData = JSON.stringify(json)
 
     if (context.logEnabled) {
-        console.log(`[S2S SEND ${context.appId}] ${postData}`)
+        const logData = context.showSecretLogs ? postData : redactSecretKeys(postData)
+        console.log(`[S2S SEND ${context.appId}] ${logData}`)
     }
 
     var options = {
@@ -256,6 +274,7 @@ exports.init = (appId, serverName, serverSecret, url, autoAuth) => {
         serverName: serverName,
         serverSecret: serverSecret,
         logEnabled: false,
+        showSecretLogs: false,
         state: STATE_DISCONNECTED,
         packetId: 0,
         sessionId: null,
@@ -286,6 +305,16 @@ exports.disconnect = context => {
  */
 exports.setLogEnabled = (context, enabled) => {
     context.logEnabled = enabled
+}
+
+/*
+ * Control whether sensitive fields (serverSecret, token, etc.) are shown in logs.
+ * When false (default), those values are replaced with [REDACTED].
+ * @param context S2S context object returned by init
+ * @param enabled Show secrets if true. Default false
+ */
+exports.setShowSecretLogs = (context, enabled) => {
+    context.showSecretLogs = enabled
 }
 
 /*
