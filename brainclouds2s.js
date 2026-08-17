@@ -12,10 +12,15 @@ const SENSITIVE_KEYS = ['secretKey', 'serverSecret', 'ApiKey', 'secret', 'token'
 
 function redactSecretKeys(s) {
     for (const key of SENSITIVE_KEYS) {
-        const search = `"${key}":"`
+        const search = `"${key}":`
         let idx = s.indexOf(search)
         while (idx >= 0) {
-            const valueStart = idx + search.length
+            // Skip past the colon and any whitespace to find the opening quote
+            // (handles both compact "key":"val" and pretty-printed "key": "val")
+            let pos = idx + search.length
+            while (pos < s.length && s[pos] !== '"') pos++
+            if (pos >= s.length) break
+            const valueStart = pos + 1 // skip opening quote
             const valueEnd = s.indexOf('"', valueStart)
             if (valueEnd < 0) break
             s = s.slice(0, valueStart) + '[REDACTED]' + s.slice(valueEnd)
