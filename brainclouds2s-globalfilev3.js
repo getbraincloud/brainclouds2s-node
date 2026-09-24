@@ -6,6 +6,16 @@
 //----------------------------------------------------
 
 var https = require('https');
+
+// One keep-alive agent for every S2S request.
+//
+// Without an explicit agent these requests use https.globalAgent, whose keepAlive
+// default is false on Node < 19 and true on Node >= 19 - so connection reuse depended
+// entirely on the host's Node version. An S2S library is long-lived and chatty, and a
+// fresh TCP + TLS handshake per call accumulates source ports in TIME_WAIT (~60s Linux,
+// ~120s Windows), which starts failing to connect against single-IP endpoints.
+const s2sKeepAliveAgent = new https.Agent({ keepAlive: true, maxSockets: 8 })
+
 var brainclouds2s = require('./brainclouds2s');
 
 /**
@@ -450,6 +460,7 @@ function sendFileUpload(context, uploadUrl, filename, fileData, callback) {
         port: parsedUrl.port || 443,
         path: parsedUrl.pathname + parsedUrl.search,
         method: 'POST',
+        agent: s2sKeepAliveAgent,
         headers: {
             'Content-Type': 'multipart/form-data; boundary=' + boundary,
             'Content-Length': body.length
