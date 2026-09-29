@@ -1,5 +1,9 @@
 'use strict';
 var https = require('https')
+
+// One keep-alive agent for every S2S request.
+const s2sKeepAliveAgent = new https.Agent({ keepAlive: true, maxSockets: 8 })
+
 var util = require('util')
 
 var RTT = require('./brainclouds2s-rtt')
@@ -47,6 +51,7 @@ function s2sRequest(context, json, callback) {
         host: context.url,
         path: '/s2sdispatcher',
         method: 'POST',
+        agent: s2sKeepAliveAgent,
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': (new util.TextEncoder().encode(postData)).length
