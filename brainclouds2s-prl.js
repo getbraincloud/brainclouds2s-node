@@ -119,7 +119,7 @@ exports.sendSessionEnded = (context, callback) => {
  *
  * Flow:
  *   1. Enable RTT
- *   2. Subscribe to the lobby status channel (chat/CHANNEL_CONNECT)
+ *   2. Subscribe to the lobby status channel (chat/SYS_CHANNEL_CONNECT)
  *   3. Notify brainCloud the room session has started (roomServer/SYS_ROOM_SESSION_STARTED)
  *   4. Query the lobby state (lobby/GET_LOBBY_DATA)
  *   5. If state is "starting" → proceed. If "disbanded" or not found → exit.
@@ -186,7 +186,7 @@ exports.start = (context, lobbyId, callback) => {
             // Step 2: Subscribe to the lobby status channel
             brainclouds2s.request(context, {
                 service: 'chat',
-                operation: 'CHANNEL_CONNECT',
+                operation: 'SYS_CHANNEL_CONNECT',
                 data: {
                     channelId: channelId,
                     maxReturn: 50
