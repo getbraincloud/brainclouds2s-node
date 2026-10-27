@@ -79,15 +79,15 @@ function loadIDs()
 
     console.log("ids.txt:");
     console.log("  GAME_ID: " + GAME_ID);
-    console.log("  SECRET: " + SECRET);
+    console.log("  SECRET: [REDACTED]");
     console.log("  GAME_VERSION: " + GAME_VERSION);
     console.log("  SERVER_URL: " + SERVER_URL);
     console.log("  PARENT_LEVEL_NAME: " + PARENT_LEVEL_NAME);
     console.log("  CHILD_APP_ID: " + CHILD_APP_ID);
-    console.log("  CHILD_SECRET: " + CHILD_SECRET);
+    console.log("  CHILD_SECRET: [REDACTED]");
     console.log("  PEER_NAME: " + PEER_NAME);
     console.log("  SERVER_NAME: " + SERVER_NAME);
-    console.log("  SERVER_SECRET: " + SERVER_SECRET);
+    console.log("  SERVER_SECRET: [REDACTED]");
     console.log("  S2S_URL: " + S2S_URL);
 }
 

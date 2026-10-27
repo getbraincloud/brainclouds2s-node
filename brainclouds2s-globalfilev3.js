@@ -6,6 +6,10 @@
 //----------------------------------------------------
 
 var https = require('https');
+
+// One keep-alive agent for every S2S request.
+const s2sKeepAliveAgent = new https.Agent({ keepAlive: true, maxSockets: 8 })
+
 var brainclouds2s = require('./brainclouds2s');
 
 /**
@@ -450,6 +454,7 @@ function sendFileUpload(context, uploadUrl, filename, fileData, callback) {
         port: parsedUrl.port || 443,
         path: parsedUrl.pathname + parsedUrl.search,
         method: 'POST',
+        agent: s2sKeepAliveAgent,
         headers: {
             'Content-Type': 'multipart/form-data; boundary=' + boundary,
             'Content-Length': body.length
