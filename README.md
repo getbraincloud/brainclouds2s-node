@@ -41,6 +41,33 @@ brainclouds2s.request(S2S.context, {
 
 ```
 
+## Logging
+
+Core S2S logs can be sent to a synchronous callback for each context:
+
+```javascript
+brainclouds2s.setLogCallback(S2S.context, (context, entry) => {
+    console.log(context.appId, entry.level, entry.message);
+    if (entry.responseBody !== undefined) {
+        console.log(entry.responseBody);
+    }
+});
+brainclouds2s.setLogEnabled(S2S.context, true);
+```
+
+Entries contain `level` (`debug` or `error`) and `message`, with optional `error`
+and `responseBody` fields. Parse errors include the response body, using the
+existing secret-key redaction unless `setShowSecretLogs(context, true)` is set.
+Verbose request, response, transport-error and heartbeat logs still require
+`setLogEnabled(context, true)`. Parse errors and request-callback errors are
+reported even when verbose logging is disabled, as before.
+
+Call `setLogCallback(context, null)` to restore the default console logging.
+If a logging callback throws synchronously, the SDK reports that error to the
+console and falls back to console logging so request processing can continue.
+This callback covers core S2S logging; RTT, PRL and global-file logging retain
+their existing behavior.
+
 ## Config Info
 
 **App Id** is viewable on the **Design | Core App Info | Application IDs** page.

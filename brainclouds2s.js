@@ -38,13 +38,27 @@ const STATE_DISCONNECTED = 0
 const STATE_AUTHENTICATING = 1
 const STATE_CONNECTED = 2
 
+function log(context, level, message, details) {
+    if (context.logCallback) {
+        try {
+            context.logCallback(context, { level, message, ...details })
+            return
+        }
+        catch (error) {
+            // A failing logger must not interrupt request processing.
+            console.error(`[S2S Log Callback Error ${context.appId}]`, error)
+        }
+    }
+    console.log(message)
+}
+
 // Execute the S2S request
 function s2sRequest(context, json, callback) {
     var postData = JSON.stringify(json)
 
     if (context.logEnabled) {
         const logData = context.showSecretLogs ? postData : redactSecretKeys(postData)
-        console.log(`[S2S SEND ${context.appId}] ${logData}`)
+        log(context, 'debug', `[S2S SEND ${context.appId}] ${logData}`)
     }
 
     var options = {
@@ -69,7 +83,7 @@ function s2sRequest(context, json, callback) {
         // The whole response has been received. Print out the result.
         res.on('end', () => {
             if (context.logEnabled) {
-                console.log(`[S2S RECV ${context.appId}] ${data}`)
+                log(context, 'debug', `[S2S RECV ${context.appId}] ${data}`)
             }
             let responseData = null;
             if (data) {
@@ -77,14 +91,17 @@ function s2sRequest(context, json, callback) {
                     responseData = JSON.parse(data);
                 }
                 catch (error) {
-                    console.log(`[S2S Error parsing response data ${context.appId}] ${error}`)
+                    log(context, 'error', `[S2S Error parsing response data ${context.appId}] ${error}`, {
+                        error,
+                        responseBody: context.showSecretLogs ? data : redactSecretKeys(data)
+                    })
                 }
             }
             callCallback(context, responseData, callback)
         })
     }).on("error", err => {
         if (context.logEnabled) {
-            console.log(`[S2S Error making request ${context.appId}] ${err.message}`)
+            log(context, 'error', `[S2S Error making request ${context.appId}] ${err.message}`, { error: err })
         }
         callCallback(context, null, callback)
     })
@@ -98,7 +115,7 @@ function startHeartbeat(context) {
     stopHeartbeat(context)
     context.heartbeatInternalId = setInterval(() => {
         if (context.logEnabled) {
-            console.log("Heartbeat")
+            log(context, 'debug', 'Heartbeat')
         }
         request(context, {
             service: "heartbeat",
@@ -250,7 +267,7 @@ function callCallback(context, data, callback) {
             callback(context, data);
         }
         catch (error) {
-            console.log(`[S2S Callback Error ${context.appId}] ${error}`)
+            log(context, 'error', `[S2S Callback Error ${context.appId}] ${error}`, { error })
         }
     }
 }
@@ -284,6 +301,7 @@ exports.init = (appId, serverName, serverSecret, url, autoAuth) => {
         serverName: serverName,
         serverSecret: serverSecret,
         logEnabled: false,
+        logCallback: null,
         showSecretLogs: false,
         state: STATE_DISCONNECTED,
         packetId: 0,
@@ -309,12 +327,28 @@ exports.disconnect = context => {
 }
 
 /*
- * Set wether S2S messages and errors are logged to the console
+ * Set whether S2S messages and errors use the configured logging destination
  * @param context S2S context object returned by init
  * @param enabled Will log if true. Default false
  */
 exports.setLogEnabled = (context, enabled) => {
     context.logEnabled = enabled
+}
+
+/*
+ * Set a synchronous callback for core S2S logs.
+ * Existing setLogEnabled behavior is unchanged. Parsing and callback errors
+ * are reported even when verbose logging is disabled.
+ * @param context S2S context object returned by init
+ * @param callback Function (context, entry), or null to restore console logging.
+ *                 entry contains level ('debug' or 'error'), message, and
+ *                 optional error and responseBody fields.
+ */
+exports.setLogCallback = (context, callback) => {
+    if (callback !== null && typeof callback !== 'function') {
+        throw new TypeError('Log callback must be a function or null')
+    }
+    context.logCallback = callback
 }
 
 /*
