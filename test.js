@@ -544,7 +544,12 @@ async function run_globalfilev3_tests()
             GFV3.sysGetGlobalFileList(s2s, "", true, (s2s, result) =>
             {
                 equal(result && result.status, 200, "SysGetGlobalFileList: " + JSON.stringify(result));
-                resolve_test();
+                // The tests below work inside s2s_test_folder; create it if this app doesn't have it yet.
+                GFV3.sysLookupFolder(s2s, "s2s_test_folder", (s2s, result) =>
+                {
+                    if (result && result.status === 200) return resolve_test();
+                    GFV3.sysCreateFolder(s2s, "", -1, "s2s_test_folder", "S2S integration test root", false, () => resolve_test());
+                });
             });
         });
     });
